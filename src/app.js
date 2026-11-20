@@ -13,8 +13,15 @@ const App = {
   /* ---------------- 初始化 ---------------- */
   init() {
     Save.load();
+    // 低端设备自动降画质（仅极低配置触发）
+    const cores = navigator.hardwareConcurrency || 8;
+    const mem = navigator.deviceMemory || 4;
+    if (Save.data.settings.quality === 'high' && (cores <= 2 || mem <= 2)) {
+      Save.data.settings.quality = 'low';
+    }
     Sound.enabled = !Save.data.settings.muted;
-    Sound.volume = Save.data.settings.volume / 100;
+    Sound.musicVolume = Save.data.settings.music / 100;
+    Sound.sfxVolume = Save.data.settings.sfx / 100;
     Stars.init();
     Battle.onEnd = (win) => this.handleBattleEnd(win);
 
@@ -276,7 +283,8 @@ const App = {
   /* ---------------- 设置 ---------------- */
   refreshSettings() {
     const st = Save.data.settings;
-    $('volumeRange').value = st.volume;
+    $('musicRange').value = st.music;
+    $('sfxRange').value = st.sfx;
     $('soundSwitch').classList.toggle('on', !st.muted);
     document.querySelectorAll('#qualitySeg button').forEach((b) => {
       b.classList.toggle('on', b.dataset.q === st.quality);
@@ -374,9 +382,12 @@ const App = {
     tag.textContent = win ? 'MISSION COMPLETE' : 'MISSION FAILED';
     tag.classList.toggle('fail', !win);
     $('resultTitle').textContent = win ? '出击成功' : '战机坠毁';
-    $('statScore').textContent = stats.score;
-    $('statKills').textContent = stats.kills;
-    $('statCrystals').textContent = stats.crystals;
+    $('statScore').textContent = 0;
+    $('statKills').textContent = 0;
+    $('statCrystals').textContent = 0;
+    this.countTo($('statScore'), stats.score, 620);
+    this.countTo($('statKills'), stats.kills, 460);
+    this.countTo($('statCrystals'), stats.crystals, 520);
     const sec = Math.floor(stats.time);
     $('statTime').textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
     $('resultReward').innerHTML = win
@@ -400,9 +411,12 @@ const App = {
     tag.textContent = 'ENDLESS RUN';
     tag.classList.remove('fail');
     $('resultTitle').textContent = '挑战结束';
-    $('statScore').textContent = stats.score;
-    $('statKills').textContent = stats.kills;
-    $('statCrystals').textContent = stats.crystals;
+    $('statScore').textContent = 0;
+    $('statKills').textContent = 0;
+    $('statCrystals').textContent = 0;
+    this.countTo($('statScore'), stats.score, 620);
+    this.countTo($('statKills'), stats.kills, 460);
+    this.countTo($('statCrystals'), stats.crystals, 520);
     const sec = Math.floor(stats.time);
     $('statTime').textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
     const e = Save.data.endless;
@@ -415,6 +429,18 @@ const App = {
   },
 
   /* ---------------- 提示 ---------------- */
+  countTo(el, to, dur) {
+    const token = (el._ct = (el._ct || 0) + 1);
+    const t0 = performance.now();
+    const step = (now) => {
+      if (el._ct !== token) return;
+      const k = Math.min(1, (now - t0) / dur);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  },
+
   toast(msg) {
     const el = $('toast');
     el.textContent = msg;
@@ -426,7 +452,12 @@ const App = {
   /* ---------------- 事件绑定 ---------------- */
   bindEvents() {
     // 首次手势解锁音频
-    const unlock = () => { Sound.init(); Sound.resume(); };
+    const unlock = () => {
+      Sound.init();
+      Sound.resume();
+      Sound.applyVolume();
+      Sound.startBgm(Screen.is('battle') ? 'battle' : 'menu');
+    };
     window.addEventListener('pointerdown', unlock, { once: true });
 
     $('btnEnter').addEventListener('click', () => { Sound.click(); this.goHome(); });
@@ -488,13 +519,20 @@ const App = {
     });
 
     // 设置
-    $('volumeRange').addEventListener('input', (e) => {
-      Save.data.settings.volume = clamp(parseInt(e.target.value, 10) || 0, 0, 100);
-      Sound.volume = Save.data.settings.volume / 100;
+    $('musicRange').addEventListener('input', (e) => {
+      Save.data.settings.music = clamp(parseInt(e.target.value, 10) || 0, 0, 100);
+      Sound.musicVolume = Save.data.settings.music / 100;
       Sound.init();
       Sound.applyVolume();
     });
-    $('volumeRange').addEventListener('change', () => { Save.save(); Sound.click(); });
+    $('musicRange').addEventListener('change', () => { Save.save(); Sound.click(); });
+    $('sfxRange').addEventListener('input', (e) => {
+      Save.data.settings.sfx = clamp(parseInt(e.target.value, 10) || 0, 0, 100);
+      Sound.sfxVolume = Save.data.settings.sfx / 100;
+      Sound.init();
+      Sound.applyVolume();
+    });
+    $('sfxRange').addEventListener('change', () => { Save.save(); Sound.click(); });
     $('soundSwitch').addEventListener('click', () => { this.toggleMute(); });
     document.querySelectorAll('#qualitySeg button').forEach((b) => {
       b.addEventListener('click', () => { Sound.click(); this.setQuality(b.dataset.q); });
@@ -503,7 +541,8 @@ const App = {
       if (!window.confirm('确定清除全部存档？此操作不可恢复。')) return;
       Save.reset();
       Sound.enabled = true;
-      Sound.volume = 0.7;
+      Sound.musicVolume = Save.data.settings.music / 100;
+      Sound.sfxVolume = Save.data.settings.sfx / 100;
       Sound.applyVolume();
       this.selected = 0;
       this.chapter = 0;

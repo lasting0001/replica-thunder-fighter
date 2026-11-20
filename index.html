@@ -108,7 +108,7 @@
       <div class="res-bar"><span>残骸 <b id="hangarShards">0</b></span></div>
     </div>
     <div class="ship-list" id="shipList"></div>
-    <p class="hangar-note">强化与进阶将在后续版本开放<br>当前可选择战机并查看基础属性</p>
+    <p class="hangar-note">强化提升攻击与生命，满级后可进阶提升星级<br>战力实时生效于战斗</p>
   </div>
 
   <!-- 设置 -->
@@ -120,9 +120,13 @@
     </div>
     <div class="setting-list">
       <div class="setting-row">
-        <div>音效<span class="sub">主音量与静音</span></div>
+        <div>音乐<span class="sub">BGM 音量</span></div>
+        <input type="range" id="musicRange" min="0" max="100" step="5" value="55" />
+      </div>
+      <div class="setting-row">
+        <div>音效<span class="sub">打击音与静音</span></div>
         <div style="display:flex;align-items:center;gap:1.4cqh">
-          <input type="range" id="volumeRange" min="0" max="100" step="5" value="70" />
+          <input type="range" id="sfxRange" min="0" max="100" step="5" value="80" />
           <div class="switch" id="soundSwitch"><i></i></div>
         </div>
       </div>
@@ -175,6 +179,11 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <div class="rotate-hint">
+    <div class="rh-phone"></div>
+    <b>请旋转至竖屏</b>
+    <span>横屏体验不佳</span>
+  </div>
 </div>
 
 <script src="src/config.js"></script>

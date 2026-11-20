@@ -26,12 +26,40 @@ body {
   width: min(100vw, 56.25dvh);
   aspect-ratio: 9 / 16;
   max-height: 100vh;
-  max-height: 100dvh;
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow: hidden;
   border-radius: 14px;
   background: #040813;
   box-shadow: 0 0 90px rgba(40, 120, 255, .18), 0 0 0 1px rgba(90, 180, 255, .16);
   container-type: size;
+}
+
+/* 横屏提示（仅触屏设备） */
+.rotate-hint { display: none; }
+@media (orientation: landscape) and (max-width: 1180px) and (pointer: coarse) {
+  .rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.4cqh;
+    background: #01030a;
+    color: #eaf6ff;
+    text-align: center;
+    font-size: 20px;
+  }
+  .rotate-hint .rh-phone {
+    width: 46px;
+    height: 76px;
+    border: 3px solid #5fd8ff;
+    border-radius: 10px;
+    box-shadow: 0 0 24px rgba(80, 200, 255, .4);
+    margin-bottom: 10px;
+  }
+  .rotate-hint span { font-size: 14px; color: #7fb6d2; }
 }
 canvas {
   display: block;
@@ -54,7 +82,14 @@ canvas {
     rgba(2, 5, 13, .93) 78%,
     #01030a 100%);
 }
-.screen.active { display: flex; }
+.screen.active { display: flex; animation: scrIn .26s cubic-bezier(.2, .7, .3, 1); }
+@keyframes scrIn {
+  from { opacity: 0; transform: translateY(1.6cqh); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .screen.active { animation: none; }
+}
 .screen.transparent {
   background: linear-gradient(180deg,
     rgba(3, 7, 18, 0) 0%,

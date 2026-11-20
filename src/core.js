@@ -19,6 +19,9 @@ const G = {
   enemies: [],
   pickups: [],
   particles: [],
+  particlePool: [],
+  bulletPool: [],
+  ebulletPool: [],
   texts: [],
   boss: null,
   score: 0, kills: 0, crystals: 0, bombs: 0,
@@ -110,6 +113,51 @@ function buildBackground(chapterIndex) {
   x.lineWidth = 2;
   x.beginPath(); x.arc(px, py, pr - 1, Math.PI * 1.15, Math.PI * 1.72); x.stroke();
 
+  // 第二章：空间站结构
+  if (chapterIndex === 1) {
+    // 环形空间站
+    x.save();
+    x.translate(600, 210);
+    x.strokeStyle = 'rgba(110,140,175,0.32)';
+    x.lineWidth = 46;
+    x.beginPath(); x.arc(0, 0, 430, Math.PI * 0.62, Math.PI * 1.34); x.stroke();
+    x.strokeStyle = 'rgba(190,215,240,0.20)';
+    x.lineWidth = 4;
+    x.beginPath(); x.arc(0, 0, 452, Math.PI * 0.62, Math.PI * 1.34); x.stroke();
+    for (let i = 0; i < 7; i++) {
+      const a = Math.PI * 0.66 + i * 0.11;
+      x.save();
+      x.translate(Math.cos(a) * 430, Math.sin(a) * 430);
+      x.rotate(a + Math.PI / 2);
+      x.fillStyle = 'rgba(24,34,50,0.92)';
+      x.fillRect(-26, -20, 52, 40);
+      x.strokeStyle = 'rgba(150,185,215,0.32)';
+      x.lineWidth = 1.5;
+      x.strokeRect(-26, -20, 52, 40);
+      x.restore();
+    }
+    x.restore();
+
+    // 左侧桁架
+    x.save();
+    x.translate(70, 700);
+    x.strokeStyle = 'rgba(105,135,165,0.26)';
+    x.lineWidth = 3;
+    x.beginPath(); x.moveTo(-30, -420); x.lineTo(30, 420); x.stroke();
+    x.beginPath(); x.moveTo(30, -420); x.lineTo(-30, 420); x.stroke();
+    for (let i = -8; i <= 8; i++) {
+      const yy = i * 52;
+      x.beginPath(); x.moveTo(-30 + i * 3.6, yy); x.lineTo(30 + i * 3.6, yy); x.stroke();
+    }
+    x.restore();
+
+    // 警示灯
+    for (let i = 0; i < 5; i++) {
+      x.fillStyle = 'rgba(255,90,90,0.5)';
+      x.beginPath(); x.arc(96, 320 + i * 160, 2.5, 0, TAU); x.fill();
+    }
+  }
+
   // 暗角
   const vg = x.createRadialGradient(W / 2, H / 2, 280, W / 2, H / 2, 760);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
@@ -176,7 +224,7 @@ const defaultSave = () => ({
     stars: { assault: 0, spike: 0, falcon: 0 }
   },
   endless: { bestScore: 0, bestWave: 0 },
-  settings: { volume: 70, muted: false, quality: 'high' }
+  settings: { music: 55, sfx: 80, muted: false, quality: 'high' }
 });
 
 const Save = {
@@ -213,7 +261,13 @@ const Save = {
             base.endless.bestWave = Math.max(0, Math.floor(Number(s.endless.bestWave) || 0));
           }
           if (s.settings && typeof s.settings === 'object') {
-            base.settings.volume = clamp(Math.round(Number(s.settings.volume) || 0), 0, 100);
+            const legacy = clamp(Math.round(Number(s.settings.volume) || 0), 0, 100);
+            const music = Number(s.settings.music);
+            const sfx = Number(s.settings.sfx);
+            base.settings.music = Number.isFinite(music)
+              ? clamp(Math.round(music), 0, 100) : (legacy || 55);
+            base.settings.sfx = Number.isFinite(sfx)
+              ? clamp(Math.round(sfx), 0, 100) : (legacy || 80);
             base.settings.muted = !!s.settings.muted;
             base.settings.quality = QUALITY[s.settings.quality] ? s.settings.quality : 'high';
           }
@@ -267,6 +321,10 @@ const Screen = {
     const el = document.getElementById('scr-' + id);
     if (el) el.classList.add('active');
     this.current = id;
+    if (Sound.ctx && (id === 'title' || id === 'home' || id === 'map' ||
+      id === 'hangar' || id === 'settings' || id === 'result')) {
+      Sound.startBgm('menu');
+    }
   },
   hideAll() {
     const all = document.querySelectorAll('.screen');

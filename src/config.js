@@ -36,7 +36,8 @@ const CFG = {
   enemy: {
     scout:   { hp: 6,  r: 24, vy: 150, sway: 60, score: 100, bulletSpeed: 235 },
     fighter: { hp: 34, r: 34, score: 300, bulletSpeed: 235 },
-    diver:   { hp: 8,  r: 20, score: 120 }
+    diver:   { hp: 8,  r: 20, score: 120 },
+    turret:  { hp: 30, r: 32, score: 280, bulletSpeed: 260 }
   },
   boss: { bars: 3, hpPerBar: 240, r: 72, score: 3000 },
   drop: { crystal: 0.55, weapon: 0.45, shield: 0.15 }
@@ -132,6 +133,32 @@ const BOSS_NAMES = {
   16: '金牛座守卫'
 };
 
+/* 三种 BOSS 形态：heavy / bright / taurus */
+const BOSS_DEFS = {
+  heavy: {
+    kind: 'heavy', name: '红色重装机',
+    bars: 3, hpPerBar: 240, score: 3000,
+    speed: 240, vx: 100,
+    cd: [1.7, 1.35, 1.05],
+    accent: ['#ffb347', '#ff6b5c', '#ff5cc8']
+  },
+  bright: {
+    kind: 'bright', name: '布莱特',
+    bars: 3, hpPerBar: 250, score: 3600,
+    speed: 330, vx: 190,
+    cd: [1.15, 0.95, 0.8],
+    accent: ['#9ff4ff', '#5fa8ff', '#c86bff']
+  },
+  taurus: {
+    kind: 'taurus', name: '金牛座守卫',
+    bars: 3, hpPerBar: 330, score: 4800,
+    speed: 215, vx: 80,
+    cd: [1.5, 1.2, 0.95],
+    accent: ['#ffd36b', '#ff9a3d', '#ff5c5c']
+  }
+};
+const BOSS_KINDS = ['heavy', 'bright', 'taurus'];
+
 /**
  * 关卡由数据描述：waves 中每一项都是 { t, kind, ... }。
  * kind: line / v / divers / fighters / drop / warn / boss
@@ -154,6 +181,11 @@ function buildLevel(id) {
     waves.push({ t, kind, n });
     t += 3.6;
   }
+  // 第 5 关起加入哨戒炮台（第 4 种敌机）
+  if (no >= 5) {
+    waves.push({ t: 10.5, kind: 'turret', n: no >= 13 ? 2 : 1 });
+    if (no >= 9) waves.push({ t: 26.5, kind: 'turret', n: 2 });
+  }
   const drops = [
     { t: 5.0,  type: 'weapon', x: W / 2 },
     { t: 14.0, type: 'shield', x: 230 },
@@ -170,15 +202,15 @@ function buildLevel(id) {
   if (isBoss) {
     waves.push({ t: t + 0.4, kind: 'warn' });
     waves.push({ t: t + 3.8, kind: 'boss' });
-    boss = {
-      name: BOSS_NAMES[no] || '红色重装机',
-      bars: 3,
-      hpPerBar: Math.round(220 + no * 14),
-      score: 2000 + no * 250,
-      cd: [1.7, 1.35, 1.05],
-      speed: [230, 250, 280][chapterIndex],
+    const key = no === 12 ? 'bright' : (no === 16 ? 'taurus' : 'heavy');
+    const def = BOSS_DEFS[key];
+    boss = Object.assign({}, def, {
+      name: BOSS_NAMES[no] || def.name,
+      hpPerBar: Math.round(def.hpPerBar * (0.92 + no * 0.03)),
+      score: def.score + no * 250,
+      speed: def.speed + chapterIndex * 20,
       variant: chapterIndex
-    };
+    });
   }
   waves.sort((a, b) => a.t - b.t);
 
