@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#040814" />
+<title>雷霆战机 · H5 复刻</title>
+<link rel="stylesheet" href="src/style.css" />
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="720" height="1280"></canvas>
+
+  <!-- 标题 -->
+  <div class="screen center" id="scr-title">
+    <div class="badge">H5 REPLICA</div>
+    <h1>雷霆战机</h1>
+    <div class="title-en">THUNDER FIGHTER</div>
+    <p class="lede">竖版弹幕射击 · 自动开火 · 一指拖动</p>
+    <div class="ctrl-grid">
+      <div class="ctrl"><span class="k">拖动</span><span>移动战机</span></div>
+      <div class="ctrl"><span class="k">必杀</span><span>左下按钮清屏</span></div>
+      <div class="ctrl"><span class="k">火力</span><span>黄色箭头升级</span></div>
+      <div class="ctrl"><span class="k">暴走</span><span>满级后拾取触发</span></div>
+    </div>
+    <button class="btn" id="btnEnter">点击开始</button>
+    <div class="best">最高分 <b id="titleBest">0</b></div>
+    <p class="disclaimer">非官方复刻 · 仅供学习研究 · 美术与音效均为自绘/合成</p>
+  </div>
+
+  <!-- 主界面 -->
+  <div class="screen transparent" id="scr-home">
+    <div class="home-top">
+      <div class="player-tag">指挥官<b>THUNDER-01</b></div>
+      <div class="res-bar">
+        <span class="coin">金币 <b id="homeCoins">0</b></span>
+        <span class="shard">残骸 <b id="homeShards">0</b></span>
+      </div>
+    </div>
+    <div class="home-menu">
+      <button class="menu-tile primary" id="menuStory">
+        <div class="mt-k">CAMPAIGN</div>
+        <div class="mt-t">星际征战</div>
+        <div class="mt-d" id="storyProgress">白羊座 · 第 1 关</div>
+      </button>
+      <button class="menu-tile" id="menuEndless">
+        <div class="mt-k">ENDLESS</div>
+        <div class="mt-t">无尽挑战</div>
+        <div class="mt-d" id="endlessDesc">无限波次 · 每 5 波守卫</div>
+      </button>
+      <button class="menu-tile" id="menuHangar">
+        <div class="mt-k">HANGAR</div>
+        <div class="mt-t">仓库</div>
+        <div class="mt-d" id="hangarShipName">突击零式</div>
+      </button>
+      <button class="menu-tile" id="menuSettings">
+        <div class="mt-k">OPTIONS</div>
+        <div class="mt-t">设置</div>
+        <div class="mt-d">音量 · 画质 · 存档</div>
+      </button>
+    </div>
+    <div class="home-foot">
+      <span>最高分 <b id="homeBest">0</b></span>
+      <span>拖动移动 · 自动射击</span>
+    </div>
+  </div>
+
+  <!-- 星图 -->
+  <div class="screen" id="scr-map">
+    <div class="topbar">
+      <button class="icon-btn" id="mapBack">返回</button>
+      <div class="ttl">星际征战</div>
+      <div class="res-bar"><span>残骸 <b id="mapShards">0</b></span></div>
+    </div>
+    <div class="chapter-tabs">
+      <button class="chapter-tab active" data-ch="0">白羊座</button>
+      <button class="chapter-tab" data-ch="1">金牛座</button>
+    </div>
+    <div class="level-grid" id="levelGrid"></div>
+    <div class="level-detail" id="levelDetail">
+      <div class="ld-head">
+        <div>
+          <div class="ld-ch" id="ldChapter">白羊座</div>
+          <div class="ld-name" id="ldName">星尘前哨</div>
+        </div>
+        <div class="ld-ch" id="ldState">未通关</div>
+      </div>
+      <div class="ld-rows">
+        <div><span>推荐战力</span><b id="ldPower">100</b></div>
+        <div><span>我方战力</span><b id="ldMyPower">100</b></div>
+        <div><span>BOSS</span><b id="ldBoss">无</b></div>
+        <div><span>奖励</span><b id="ldReward">金币 25 / 残骸 10</b></div>
+      </div>
+      <div class="ld-drop"><span>掉落</span><b id="ldDrops">武器 ×3 · 护盾 ×1 · 暴走 ×1 · 回血 ×1</b></div>
+      <div class="ld-tip" id="ldTip"></div>
+      <div class="ld-actions">
+        <button class="btn ghost small" id="btnHangarFromMap">仓库</button>
+        <button class="btn" id="btnLaunch">出击</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 仓库 -->
+  <div class="screen scroll" id="scr-hangar">
+    <div class="topbar">
+      <button class="icon-btn" id="hangarBack">返回</button>
+      <div class="ttl">仓库</div>
+      <div class="res-bar"><span>残骸 <b id="hangarShards">0</b></span></div>
+    </div>
+    <div class="ship-list" id="shipList"></div>
+    <p class="hangar-note">强化与进阶将在后续版本开放<br>当前可选择战机并查看基础属性</p>
+  </div>
+
+  <!-- 设置 -->
+  <div class="screen" id="scr-settings">
+    <div class="topbar">
+      <button class="icon-btn" id="settingsBack">返回</button>
+      <div class="ttl">设置</div>
+      <div class="res-bar"></div>
+    </div>
+    <div class="setting-list">
+      <div class="setting-row">
+        <div>音效<span class="sub">主音量与静音</span></div>
+        <div style="display:flex;align-items:center;gap:1.4cqh">
+          <input type="range" id="volumeRange" min="0" max="100" step="5" value="70" />
+          <div class="switch" id="soundSwitch"><i></i></div>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div>画质<span class="sub">影响粒子与特效数量</span></div>
+        <div class="seg" id="qualitySeg">
+          <button data-q="high" class="on">高</button>
+          <button data-q="mid">中</button>
+          <button data-q="low">低</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div>存档<span class="sub">进度与最高分保存在本机</span></div>
+        <button class="btn danger small" id="btnClearSave">清除存档</button>
+      </div>
+    </div>
+    <p class="hangar-note">清除后关卡进度、金币与残骸将重置<br>最高分同时清空</p>
+  </div>
+
+  <!-- 结算 -->
+  <div class="screen center" id="scr-result">
+    <div class="result-tag" id="resultTag">MISSION COMPLETE</div>
+    <h2 id="resultTitle">出击成功</h2>
+    <div class="stats">
+      <div><span>得分</span><b id="statScore">0</b></div>
+      <div><span>击毁</span><b id="statKills">0</b></div>
+      <div><span>水晶</span><b id="statCrystals">0</b></div>
+      <div><span>用时</span><b id="statTime">0:00</b></div>
+    </div>
+    <div class="result-reward" id="resultReward">金币 <b>0</b> · 残骸 <b>0</b></div>
+    <div class="result-best" id="resultBest">最高分 0</div>
+    <div class="btn-col" style="width:100%">
+      <button class="btn" id="btnNext">下一关</button>
+      <div class="btn-row">
+        <button class="btn ghost small" id="btnRetry">再战</button>
+        <button class="btn ghost small" id="btnToMap">星图</button>
+        <button class="btn ghost small" id="btnToHome">主界面</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 暂停 -->
+  <div class="screen center" id="scr-pause">
+    <h2>已暂停</h2>
+    <div class="btn-col">
+      <button class="btn" id="btnResume">继续战斗</button>
+      <button class="btn ghost" id="btnPauseRetry">重新开始</button>
+      <button class="btn ghost" id="btnPauseQuit">放弃并返回</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="src/config.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/core.js"></script>
+<script src="src/battle.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
